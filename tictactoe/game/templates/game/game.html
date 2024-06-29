@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <meta http-equiv="refresh" content="1"> <!-- Refresh page every 1 second -->
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            background-color: #333;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            background-color: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .cell:hover {
+            background-color: #f0f0f0;
+            transform: scale(1.05);
+        }
+
+        .cell.disabled {
+            cursor: not-allowed;
+            background-color: #e0e0e0;
+        }
+
+        #winner {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            background-color: #004085;
+        }
+    </style>
+    <script>
+        let gameId = "{{ game_id }}";
+        let csrfToken = '{{ csrf_token }}';
+
+        function playMove(index) {
+            fetch(`/game/${gameId}/move/${index}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    updateBoard(data.board, data.winner);
+                } else {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function updateBoard(board, winner) {
+            board.split('').forEach((value, index) => {
+                let cell = document.getElementById(`cell-${index}`);
+                cell.innerText = value !== ' ' ? value : '';
+                if (winner || value !== ' ') {
+                    cell.classList.add('disabled');
+                } else {
+                    cell.classList.remove('disabled');
+                }
+            });
+            if (winner) {
+                document.getElementById('winner').innerText = `Winner: ${winner}`;
+            }
+        }
+
+        window.onload = function() {
+            updateBoard('{{ board }}', '{{ winner }}');
+        }
+    </script>
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div id="board">
+        {% for i in range %}
+        <div id="cell-{{ i }}" class="cell" onclick="playMove({{ i }})"></div>
+        {% endfor %}
+    </div>
+    <div id="winner"></div>
+    <button onclick="location.href='{% url 'reset_game' game_id=game_id %}'">Reset Game</button>
+</body>
+</html>
